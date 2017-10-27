@@ -1,4 +1,4 @@
-package hu.szaniszlaid.webdemo.demo;
+package hu.szaniszlaid.webdemo;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

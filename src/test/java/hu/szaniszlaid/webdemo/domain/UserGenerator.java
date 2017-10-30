@@ -9,7 +9,7 @@ public class UserGenerator {
      *
      * @return a new random {@link User}
      */
-    public static User genearateUser() {
+    public static User generateUser() {
         User testUser = new User();
         testUser.setUsername(generateRandomString(100));
         testUser.setName(generateRandomString(200));

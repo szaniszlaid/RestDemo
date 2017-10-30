@@ -12,7 +12,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.nio.charset.Charset;
 
 import static hu.szaniszlaid.webdemo.controller.BaseController.API_URL;
-import static hu.szaniszlaid.webdemo.domain.UserGenerator.genearateUser;
+import static hu.szaniszlaid.webdemo.domain.UserGenerator.generateUser;
 import static hu.szaniszlaid.webdemo.utils.MatcherUtils.isLongEqual;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 public class UserRestControllerTest extends BaseControllerTest {
 
-    private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
+    private static final MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
@@ -48,7 +48,7 @@ public class UserRestControllerTest extends BaseControllerTest {
      * */
     @Test
     public void findUser() throws Exception {
-        User testUser = userRepository.save(genearateUser());
+        User testUser = userRepository.save(generateUser());
 
         mockMvc.perform(get(API_URL + "user").param("id", testUser.getId().toString()))
                 .andExpect(status().isOk())
@@ -76,7 +76,7 @@ public class UserRestControllerTest extends BaseControllerTest {
      * */
     @Test
     public void createUser() throws Exception {
-        User userToPost = genearateUser();
+        User userToPost = generateUser();
         String userJson = json(userToPost);
 
         mockMvc.perform(post(API_URL + "user")

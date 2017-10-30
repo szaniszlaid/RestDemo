@@ -4,11 +4,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class GeneratorUtils {
+class GeneratorUtils {
 
     private static final List<Character> availableCharacters = Arrays.asList('a', 'á', 'b', 'c', 'd', 'e', 'é', 'f', 'g', 'h', 'i', 'í', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'ú', 'ü', 'ű', 'x', 'y', 'z', '-', '_', '\'', '"', '\\', ',', '@', '.');
 
-    private static Random random = new Random();
+    private static final Random random = new Random();
 
 
     /**

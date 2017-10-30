@@ -26,13 +26,13 @@ public class BaseControllerTest {
     @Autowired
     void setConverters(HttpMessageConverter<?>[] converters) {
 
-        this.mappingJackson2HttpMessageConverter = Arrays.asList(converters).stream()
+        mappingJackson2HttpMessageConverter = Arrays.stream(converters)
                 .filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter)
                 .findAny()
                 .orElse(null);
 
         assertNotNull("the JSON message converter must not be null",
-                this.mappingJackson2HttpMessageConverter);
+                mappingJackson2HttpMessageConverter);
     }
 
 

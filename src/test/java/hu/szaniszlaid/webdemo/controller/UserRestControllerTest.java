@@ -1,34 +1,29 @@
 package hu.szaniszlaid.webdemo.controller;
 
-import hu.szaniszlaid.webdemo.DemoApplication;
 import hu.szaniszlaid.webdemo.domain.User;
 import hu.szaniszlaid.webdemo.repository.UserRepository;
-import hu.szaniszlaid.webdemo.utils.MatcherUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.charset.Charset;
-import java.util.Random;
 
 import static hu.szaniszlaid.webdemo.controller.BaseController.API_URL;
-import static org.hamcrest.Matchers.*;
+import static hu.szaniszlaid.webdemo.domain.UserGenerator.genearateUser;
+import static hu.szaniszlaid.webdemo.utils.MatcherUtils.isLongEqual;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = DemoApplication.class)
-@WebAppConfiguration
-public class UserRestControllerTest {
+
+public class UserRestControllerTest extends BaseControllerTest {
 
     private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
@@ -48,14 +43,17 @@ public class UserRestControllerTest {
         this.mockMvc = webAppContextSetup(webApplicationContext).build();
     }
 
+    /**
+     * GET user by "id" param
+     * */
     @Test
-    public void UserGET() throws Exception {
-        User testUser = userRepository.save(createTestUser());
+    public void findUser() throws Exception {
+        User testUser = userRepository.save(genearateUser());
 
         mockMvc.perform(get(API_URL + "user").param("id", testUser.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$.id", MatcherUtils.isLongEqual(testUser.getId())))
+                .andExpect(jsonPath("$.id", isLongEqual(testUser.getId())))
                 .andExpect(jsonPath("$.username", is(testUser.getUsername())))
                 .andExpect(jsonPath("$.name", is(testUser.getName())))
                 .andExpect(jsonPath("$.email", is(testUser.getEmail())))
@@ -63,23 +61,34 @@ public class UserRestControllerTest {
     }
 
     @Test
+    public void UserNotFound() throws Exception {
+        mockMvc.perform(get(API_URL + "user").param("id", "9999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     public void UserPOST() {
         fail("Not yet implemented");
     }
 
-
     /**
-     * creates a sample user
-     * @return a random {@link User}
+     * POST new user
      * */
-    private User createTestUser() {
-        User testUser = new User();
-        testUser.setUsername("alex_username " + new Random().nextInt(99999));
-        testUser.setEmail("testusermail@mail.com");
-        testUser.setName("Sample utf-8 User őűáúóüö");
-        testUser.setPassword("úpoiúüö182389578139ö246rsdfhsdjklfh sdíkf yfjí-lkí-yfjáasjfőiufa8e9f7üafúsadf5498456");
+    @Test
+    public void createUser() throws Exception {
+        User userToPost = genearateUser();
+        String userJson = json(userToPost);
 
-        return testUser;
+        mockMvc.perform(post(API_URL + "user")
+                .contentType(contentType)
+                .content(userJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", is(notNullValue())))
+                .andExpect(jsonPath("$.username", is(userToPost.getUsername())))
+                .andExpect(jsonPath("$.name", is(userToPost.getName())))
+                .andExpect(jsonPath("$.email", is(userToPost.getEmail())))
+                .andExpect(jsonPath("$.password", is(userToPost.getPassword())));
     }
+
 
 }

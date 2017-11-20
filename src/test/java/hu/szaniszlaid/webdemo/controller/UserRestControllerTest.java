@@ -1,11 +1,17 @@
 package hu.szaniszlaid.webdemo.controller;
 
 import hu.szaniszlaid.webdemo.domain.User;
-import hu.szaniszlaid.webdemo.repository.UserRepository;
+import hu.szaniszlaid.webdemo.service.UserService;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -22,8 +28,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
-
-public class UserRestControllerTest extends BaseControllerTest {
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@AutoConfigureJsonTesters
+public class UserRestControllerTest {
 
     private static final MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
@@ -33,10 +41,16 @@ public class UserRestControllerTest extends BaseControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
+
+    /**
+     * AutoConfigureJsonTesters annotation initializes this field
+     */
+    @SuppressWarnings("unused")
+    private JacksonTester<User> jsonTester;
 
     @Before
     public void setup() throws Exception {
@@ -45,10 +59,10 @@ public class UserRestControllerTest extends BaseControllerTest {
 
     /**
      * GET user by "id" param
-     * */
+     */
     @Test
     public void findUser() throws Exception {
-        User testUser = userRepository.save(generateUser());
+        User testUser = userService.save(generateUser());
 
         mockMvc.perform(get(API_URL + "user").param("id", testUser.getId().toString()))
                 .andExpect(status().isOk())
@@ -62,10 +76,11 @@ public class UserRestControllerTest extends BaseControllerTest {
 
     @Test
     public void UserNotFound() throws Exception {
-        mockMvc.perform(get(API_URL + "user").param("id", "9999"))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get(API_URL + "user").param("id", "1"))
+                .andExpect(status().isNoContent());
     }
 
+    @Ignore
     @Test
     public void UserPOST() {
         fail("Not yet implemented");
@@ -73,11 +88,11 @@ public class UserRestControllerTest extends BaseControllerTest {
 
     /**
      * POST new user
-     * */
+     */
     @Test
     public void createUser() throws Exception {
         User userToPost = generateUser();
-        String userJson = json(userToPost);
+        String userJson = jsonTester.write(userToPost).getJson();
 
         mockMvc.perform(post(API_URL + "user")
                 .contentType(contentType)

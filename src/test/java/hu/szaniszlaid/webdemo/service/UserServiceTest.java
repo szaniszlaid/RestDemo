@@ -2,10 +2,14 @@ package hu.szaniszlaid.webdemo.service;
 
 import hu.szaniszlaid.webdemo.domain.User;
 import hu.szaniszlaid.webdemo.domain.UserGenerator;
+import hu.szaniszlaid.webdemo.repository.UserRepository;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.transaction.Transactional;
@@ -20,21 +24,32 @@ import static org.junit.Assert.assertThat;
 public class UserServiceTest {
 
     @Autowired
-    UserService service;
+    private UserService service;
+
+    @MockBean
+    UserRepository userRepository;
+
+
+
+    @Before
+    public void setup() {
+
+    }
 
     @Test
     public void getExistingUserById() {
         User userToSave = new User();
-        userToSave.setUsername("test_username_02");
 
-        User retrievedUser = service.save(userToSave);
+        userToSave.setId(1L);
+        userToSave.setUsername("test_username_01");
 
-        assertThat(service.getUserById(retrievedUser.getId()), is(Optional.of(userToSave)));
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(userToSave));
+        assertThat(service.getUserById(userToSave.getId()), is(Optional.of(userToSave)));
     }
 
     @Test
     public void getNonExistentUser() {
-        assertThat(service.getUserById(1L), is(Optional.empty()));
+        assertThat(service.getUserById(2L), is(Optional.empty()));
     }
 
     @Test

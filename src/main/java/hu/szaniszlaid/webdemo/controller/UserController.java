@@ -2,7 +2,6 @@ package hu.szaniszlaid.webdemo.controller;
 
 import hu.szaniszlaid.webdemo.domain.User;
 import hu.szaniszlaid.webdemo.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,7 +15,6 @@ public class UserController extends BaseController{
 
     private final UserService userService;
 
-    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }

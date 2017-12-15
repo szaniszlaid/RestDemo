@@ -1,5 +1,7 @@
 package hu.szaniszlaid.webdemo.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import hu.szaniszlaid.webdemo.domain.User;
 import hu.szaniszlaid.webdemo.service.UserService;
 import org.junit.Before;
@@ -9,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.json.JacksonTester;
+import org.springframework.boot.test.json.GsonTester;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,15 +48,14 @@ public class UserRestControllerTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    /**
-     * AutoConfigureJsonTesters annotation initializes this field
-     */
-    @SuppressWarnings("unused")
-    private JacksonTester<User> jsonTester;
+    private GsonTester<User> gsonTester;
 
     @Before
     public void setup() throws Exception {
         this.mockMvc = webAppContextSetup(webApplicationContext).build();
+
+        Gson gson = new GsonBuilder().create();
+        GsonTester.initFields(this.gsonTester, gson);
     }
 
     /**
@@ -63,8 +64,9 @@ public class UserRestControllerTest {
     @Test
     public void findUser() throws Exception {
         User testUser = userService.save(generateUser());
+        String userId = testUser.getId().toString();
 
-        mockMvc.perform(get(API_URL + "user").param("id", testUser.getId().toString()))
+        mockMvc.perform(get(API_URL + "user").param("id", userId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$.id", isLongEqual(testUser.getId())))
@@ -92,7 +94,7 @@ public class UserRestControllerTest {
     @Test
     public void createUser() throws Exception {
         User userToPost = generateUser();
-        String userJson = jsonTester.write(userToPost).getJson();
+        String userJson = gsonTester.write(userToPost).getJson();
 
         mockMvc.perform(post(API_URL + "user")
                 .contentType(contentType)

@@ -2,6 +2,7 @@ package hu.szaniszlaid.webdemo.repository;
 
 
 import hu.szaniszlaid.webdemo.domain.User;
+import hu.szaniszlaid.webdemo.domain.UserGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.transaction.Transactional;
+import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
 
 /**
  * Integration test class for User repository
@@ -33,12 +36,13 @@ public class UserRepositoryTest {
 
     @Test
     public void findOneTest() {
-        User userToSave = new User();
-        userToSave.setUsername("test_username_01");
+        User userToSave = UserGenerator.generateUser();
 
         User retrievedUser = repository.save(userToSave);
 
-        assertThat(repository.findById(retrievedUser.getId())).isPresent();
-        assertThat(repository.findById(retrievedUser.getId() + 1)).isEmpty();
+        assertThat(repository.findById(retrievedUser.getId()), is(not(nullValue())));
+        assertThat(repository.findById(retrievedUser.getId() + 1), is(Optional.empty()));
+
+        assertThat(retrievedUser, samePropertyValuesAs(userToSave));
     }
 }

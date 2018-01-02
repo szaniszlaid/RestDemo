@@ -3,7 +3,6 @@ package hu.szaniszlaid.webdemo.service;
 import hu.szaniszlaid.webdemo.domain.User;
 import hu.szaniszlaid.webdemo.domain.UserGenerator;
 import hu.szaniszlaid.webdemo.repository.UserRepository;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -15,9 +14,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.transaction.Transactional;
 import java.util.Optional;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.Assert.assertThat;
 
+/**
+ * Now these test cases are totally unnecessary, these are written just for practice.
+ * */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Transactional
@@ -30,50 +33,48 @@ public class UserServiceTest {
     UserRepository userRepository;
 
 
-
-    @Before
-    public void setup() {
-
-    }
-
     @Test
     public void getExistingUserById() {
-        User userToSave = new User();
+        User mockedUser = UserGenerator.generateUser();
+        mockedUser.setId(1L);
 
-        userToSave.setId(1L);
-        userToSave.setUsername("test_username_01");
+        Mockito.when(userRepository.findById(mockedUser.getId())).thenReturn(Optional.ofNullable(mockedUser));
 
-        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(userToSave));
-        assertThat(service.getUserById(userToSave.getId()), is(Optional.of(userToSave)));
+        assertThat(service.getUserById(mockedUser.getId()), is(Optional.of(mockedUser)));
+        assertThat(service.getUserById(mockedUser.getId()).get(), samePropertyValuesAs(mockedUser));
     }
 
     @Test
-    public void getNonExistentUser() {
-        assertThat(service.getUserById(2L), is(Optional.empty()));
+    public void getNonExistingUser() {
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThat(service.getUserById(1L), is(Optional.empty()));
     }
 
     @Test
     public void saveNewValidUser() {
-        User userToSave = service.save(UserGenerator.generateUser());
+        User userToSave = UserGenerator.generateUser();
+        Mockito.when(userRepository.save(userToSave)).thenReturn(userToSave);
 
-        assertThat(userToSave.getId(), is(notNullValue()));
-
-        User retrievedUser = service.getUserById(userToSave.getId()).orElse(null);
+        User retrievedUser = userRepository.save(userToSave);
         assertThat(retrievedUser, samePropertyValuesAs(userToSave));
     }
 
     @Test
     public void updateUser() {
-        User originalUser = service.save(UserGenerator.generateUser());
+        User user = UserGenerator.generateUser();
 
-        User userToUpdate = UserGenerator.generateUser();
-        userToUpdate.setId(originalUser.getId());
+        Mockito.when(userRepository.save(user)).thenReturn(user);
 
-        service.save(userToUpdate);
+        User userToUpdate = service.save(user);
 
-        User retrievedUser = service.getUserById(originalUser.getId()).orElse(null);
+        userToUpdate.setName("new name to update");
 
-        assertThat(retrievedUser, samePropertyValuesAs(userToUpdate));
+        Mockito.when(userRepository.save(userToUpdate)).thenReturn(userToUpdate);
+
+        User updatedUser = service.save(userToUpdate);
+
+        assertThat(updatedUser, samePropertyValuesAs(userToUpdate));
 
     }
 }

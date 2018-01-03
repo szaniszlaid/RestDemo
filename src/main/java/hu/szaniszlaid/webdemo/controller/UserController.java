@@ -2,16 +2,17 @@ package hu.szaniszlaid.webdemo.controller;
 
 import hu.szaniszlaid.webdemo.domain.User;
 import hu.szaniszlaid.webdemo.service.UserService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Optional;
 
 
 @RestController
-public class UserController extends BaseController{
+public class UserController extends BaseController {
 
     private final UserService userService;
 
@@ -28,6 +29,17 @@ public class UserController extends BaseController{
         } else {
             return ResponseEntity.noContent().build();
         }
+    }
+
+    @PostMapping("/user")
+    public ResponseEntity<?> createNewUser(@RequestBody User user) {
+        validateEntityPost(user);
+
+        User createdUser = userService.save(user);
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setLocation(ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdUser.getId()).toUri());
+        return new ResponseEntity<>(createdUser, responseHeaders, HttpStatus.CREATED);
     }
 
 }

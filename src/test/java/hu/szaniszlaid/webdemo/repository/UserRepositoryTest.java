@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.transaction.Transactional;
@@ -44,5 +45,11 @@ public class UserRepositoryTest {
         assertThat(repository.findById(retrievedUser.getId() + 1), is(Optional.empty()));
 
         assertThat(retrievedUser, samePropertyValuesAs(userToSave));
+    }
+
+
+    @Test (expected = InvalidDataAccessApiUsageException.class)
+    public void findById_NullValue_Should_ThrowException() {
+        repository.findById(null);
     }
 }

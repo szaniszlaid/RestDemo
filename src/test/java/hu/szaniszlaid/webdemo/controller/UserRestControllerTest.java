@@ -5,26 +5,29 @@ import com.google.gson.GsonBuilder;
 import hu.szaniszlaid.webdemo.domain.User;
 import hu.szaniszlaid.webdemo.service.UserService;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.json.GsonTester;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.charset.Charset;
+import java.util.Optional;
 
 import static hu.szaniszlaid.webdemo.controller.BaseController.API_URL;
 import static hu.szaniszlaid.webdemo.domain.UserGenerator.generateUser;
 import static hu.szaniszlaid.webdemo.utils.MatcherUtils.isLongEqual;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -42,7 +45,7 @@ public class UserRestControllerTest {
 
     private MockMvc mockMvc;
 
-    @Autowired
+    @MockBean
     private UserService userService;
 
     @Autowired
@@ -55,7 +58,7 @@ public class UserRestControllerTest {
         this.mockMvc = webAppContextSetup(webApplicationContext).build();
 
         Gson gson = new GsonBuilder().create();
-        GsonTester.initFields(this.gsonTester, gson);
+        GsonTester.initFields(this, gson);
     }
 
     /**
@@ -63,17 +66,21 @@ public class UserRestControllerTest {
      */
     @Test
     public void findUser() throws Exception {
-        User testUser = userService.save(generateUser());
-        String userId = testUser.getId().toString();
+        User user = generateUser();
+        user.setId(1L);
+
+        Mockito.when(userService.getUserById(user.getId())).thenReturn(Optional.ofNullable(user));
+
+        String userId = user.getId().toString();
 
         mockMvc.perform(get(API_URL + "user").param("id", userId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$.id", isLongEqual(testUser.getId())))
-                .andExpect(jsonPath("$.username", is(testUser.getUsername())))
-                .andExpect(jsonPath("$.name", is(testUser.getName())))
-                .andExpect(jsonPath("$.email", is(testUser.getEmail())))
-                .andExpect(jsonPath("$.password", is(testUser.getPassword())));
+                .andExpect(jsonPath("$.id", isLongEqual(user.getId())))
+                .andExpect(jsonPath("$.username", is(user.getUsername())))
+                .andExpect(jsonPath("$.name", is(user.getName())))
+                .andExpect(jsonPath("$.email", is(user.getEmail())))
+                .andExpect(jsonPath("$.password", is(user.getPassword())));
     }
 
     @Test
@@ -82,29 +89,51 @@ public class UserRestControllerTest {
                 .andExpect(status().isNoContent());
     }
 
-    @Ignore
-    @Test
-    public void UserPOST() {
-        fail("Not yet implemented");
-    }
 
     /**
      * POST new user
      */
     @Test
-    public void createUser() throws Exception {
+    public void postValidUser() throws Exception {
         User userToPost = generateUser();
         String userJson = gsonTester.write(userToPost).getJson();
+
+        User savedUser = userToPost;
+        savedUser.setId(1L);
+
+        Mockito.when(userService.save(any(User.class))).thenReturn(savedUser);
+
+        String locationHeaderValue = BaseController.API_URL + "user/" + savedUser.getId().toString();
+
 
         mockMvc.perform(post(API_URL + "user")
                 .contentType(contentType)
                 .content(userJson))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id", is(notNullValue())))
                 .andExpect(jsonPath("$.username", is(userToPost.getUsername())))
-                .andExpect(jsonPath("$.name", is(userToPost.getName())))
-                .andExpect(jsonPath("$.email", is(userToPost.getEmail())))
-                .andExpect(jsonPath("$.password", is(userToPost.getPassword())));
+                .andExpect(header().string("location", containsString(locationHeaderValue)));
+    }
+
+
+    /**
+     * POST new user with id should return with HTTP.CONFLICT
+     */
+
+    @Test
+    public void postUserWithId_isNotAcceptable() throws Exception {
+        User userToPost = generateUser();
+        userToPost.setId(1L);
+
+        String userJson = gsonTester.write(userToPost).getJson();
+
+        Mockito.when(userService.save(any(User.class))).thenReturn(userToPost);
+
+        mockMvc.perform(post(API_URL + "user")
+                .content(userJson)
+                .contentType(contentType))
+                .andExpect(jsonPath("$.title", is("Entity conflict")))
+                .andExpect(jsonPath("$.detail", notNullValue()))
+                .andExpect(status().isConflict());
     }
 
 
